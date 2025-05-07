@@ -1,9 +1,10 @@
 // Long-term locks for processes
-struct sleeplock {
-    uint locked;       // Is the lock held?
-    struct spinlock lk; // spinlock protecting this sleep lock
+struct petersonlock {
+    uint flag[2];
+    uint turn;
     
     // For debugging:
-    char *name;        // Name of lock.
+    int lockId;        // lock id = index
     int pid;           // Process holding lock
+    int deleted = 1;       // 1 if lock is deleted
   };
