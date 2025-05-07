@@ -1,10 +1,12 @@
 // Long-term locks for processes
 struct petersonlock {
-    uint flag[2];
-    uint turn;
+    int flag[2];
+    int turn;
+    int initialized;    // 1 if lock is deleted
+    int internal_lock;          // 1 if lock is held
+ 
     
     // For debugging:
     int lockId;        // lock id = index
     int pid;           // Process holding lock
-    int deleted = 1;       // 1 if lock is deleted
   };
