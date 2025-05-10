@@ -187,3 +187,11 @@ void            virtio_disk_intr(void);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
+
+//petersonlocks.c
+void            init_petersonlock_arr(void);
+int             peterson_create(void);
+int             peterson_acquire(int lock_id, int role);
+int             peterson_release(int lock_id, int role);
+int             peterson_destroy(int lock_id);
+

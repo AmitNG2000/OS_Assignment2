@@ -1,14 +1,38 @@
 #include "types.h"
-#include "petersonlock.h"
+#include "param.h"       // For NCPU, NOFILE
+#include "memlayout.h"
+#include "riscv.h"
 #include "defs.h"
-#include "proc.h"
+#include "spinlock.h"    // In order to avoid compilation error of proc
+#include "proc.h"        // For struct proc
+#include "petersonlock.h" // For struct petersonlock
 
 #define MAX_PETERSON_LOCKS  15
 struct petersonlock petersonlocks[MAX_PETERSON_LOCKS];
 
-int peterson_create(void) {
+static void  internal_peterson_acquire(struct petersonlock *pl);
+static void  internal_peterson_release(struct petersonlock *pl);
+
+// Initialize the Peterson locks
+// This function should be called once at the beginning of the program.
+void init_petersonlock_arr(void) {
     struct petersonlock *pl;
     for (int i = 0; i < MAX_PETERSON_LOCKS; i++) {
+        pl = &petersonlocks[i];
+        pl->flag[0] = 0;
+        pl->flag[1] = 0;
+        pl->turn = 0;
+        pl->initialized = 0;
+        pl->lockId = -1;
+        pl->pid = -1;
+        pl->internal_lock = 0;
+    }
+}
+
+int peterson_create(void) {
+    struct petersonlock *pl;
+    //Go over the petersonlocks array.
+    for (int i = 0; i < MAX_PETERSON_LOCKS; i++) { 
         pl = &petersonlocks[i];        
         internal_peterson_acquire(pl);
         if (!pl->initialized) { //found an empty lock
@@ -27,7 +51,7 @@ int peterson_create(void) {
     return -1; // No available lock
 }
 
-void internal_peterson_acquire(struct petersonlock *pl) {
+void static internal_peterson_acquire(struct petersonlock *pl) {
     push_off(); // disable interrupts to avoid deadlock.
     while (__sync_lock_test_and_set(&pl->internal_lock, 1)) {
       yield(); // let other processes run
@@ -35,7 +59,7 @@ void internal_peterson_acquire(struct petersonlock *pl) {
     __sync_synchronize(); // Memory barrier
   }
   
-void internal_peterson_release(struct petersonlock *pl) {
+void static internal_peterson_release(struct petersonlock *pl) {
     __sync_synchronize(); // Memory barrier
     __sync_lock_release(&pl->internal_lock);
     pop_off(); // re-enable interrupts
