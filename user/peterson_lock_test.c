@@ -1,8 +1,17 @@
 #include "kernel/types.h"
-#include "kernel/stat.h"
 #include "user/user.h"
+#include "kernel/stat.h"
+
 
 int main() {
+    /*
+    // Test the peterson_create function. Expected result: Not enough locks.
+    for (int i = 0; i < 100; i++) {
+        peterson_create();
+    }
+    */
+    
+
     int lock_id = peterson_create();
     if (lock_id < 0) {
         printf("Failed to create lock\n");
@@ -19,15 +28,25 @@ int main() {
         }
 
         // Critical section
-        if (role == 0)
+        if (role == 0) {
             printf("Parent process in critical section\n");
-        else
+        }
+        else {
             printf("Child process in critical section\n");
-
+        }
+            
         if (peterson_release(lock_id, role) < 0) {
             printf("Failed to release lock\n");
             exit(1);
         }
+
+        /* 
+        // sleep for parent in order to allow child process to run and get not round-robin scheduling
+        if (role == 0) { //prant process
+                sleep(1); // Sleep to allow child process to run
+            }
+        */
+        
     }
 
     if (fork_ret > 0) {

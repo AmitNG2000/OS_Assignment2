@@ -27,6 +27,7 @@ void init_petersonlock_arr(void) {
         pl->pid = -1;
         pl->internal_lock = 0;
     }
+    printf("[init_petersonlock_arr] Peterson locks array was initialized\n");
 }
 
 int peterson_create(void) {
@@ -130,6 +131,8 @@ int peterson_destroy(int lock_id) {
 
     pl->initialized = 0;
     pl->pid = -1;
+
+    printf("[peterson_destroy] peterson lock with lock id %d was destroyed\n ", lock_id);
 
     internal_peterson_release(pl);
 
