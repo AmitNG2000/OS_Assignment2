@@ -155,7 +155,13 @@ void assign_path(int proc_index) {
         current_lock_index = (proc_index >> (L - l)) + ((1 << l) - 1);
         current_lock_id = lock_ids[current_lock_index];
         lock_ids_path[l] = current_lock_id;
+    }
+}
 
+void print_path() {
+    printf("Path: ");
+    for (int l = 0; l < L; l++) {
+        printf("level: %d, lock id %d , role: %d\n", l, lock_ids_path[l], roles_path[l]);
     }
 }
 

@@ -17,7 +17,9 @@ int main(int argc, char **argv) {
     // Child
     if (tournament_id >= 0) {
         tournament_acquire();
-        printf("Child process with pid %d and tournament_id %d in critical section\n", getpid(), tournament_id);
+        printf("%d \n", getpid());
+        //printf("Child process with pid %d and tournament_id %d in critical section\n", getpid(), tournament_id);
+        //print_path();
         tournament_release();
         // It is unnecessary to clean up children’s data, as they require it during execution and the OS delete it upon the process' termination.
         exit(0); 
