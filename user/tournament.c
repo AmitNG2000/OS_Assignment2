@@ -17,17 +17,17 @@ int main(int argc, char **argv) {
     // Child
     if (tournament_id >= 0) {
         tournament_acquire();
-        printf("%d \n", getpid());
-        //printf("Child process with pid %d and tournament_id %d in critical section\n", getpid(), tournament_id);
-        //print_path();
+        printf("Child process with pid: %d and tournament_id: %d, is in critical section\n", getpid(), tournament_id);
+        print_path();
         tournament_release();
         // It is unnecessary to clean up children’s data, as they require it during execution and the OS delete it upon the process' termination.
         exit(0); 
     }
     // Pranet
     if (tournament_id == TOURNAMENT_PARENT) {
+        // Wait for all child processes to finish
         for (int i = 0; i < num_processes; i++) {
-            wait(0); // Wait for all child processes to finish
+            wait(0); 
         }
         tournament_destroy();
         exit(0);

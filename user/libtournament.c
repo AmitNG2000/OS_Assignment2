@@ -30,7 +30,6 @@ int tournament_create(int processes) {
     if (!tournament_is_valid_number_of_processes(processes)) {
         printf("[peterson_lock_test] Error: Number of processes must be a power of 2, positive and less than or equal to %d\n", MAX_PROCESSES);
         return -1;
-    
     }
     
     // Initialize data arrays
@@ -57,8 +56,7 @@ int tournament_create(int processes) {
 
     // Fork processes
     int pid;
-    int index;
-    for (index = 0; index < processes; index++) {
+    for (int index = 0; index < processes; index++) {
         pid = fork();
         //error
         if (pid < 0)
@@ -127,9 +125,8 @@ int tournament_is_valid_number_of_processes(int n) {
 
 int log2(int n) {
     int log = 0;
-    while ((1 << log) < n) {
+    while ((1 << log) < n)
         log++;
-    }
     return log;
 }
 
@@ -141,25 +138,21 @@ int log2(int n) {
  * At each level l, acquires lock_ids_path[l] with role roles_path[l].
  */
 void assign_path(int proc_index) {
-    int current_role = -1;
-    int current_lock_index = -1;
-    int current_lock_id = -1;
     roles_path = malloc(L * sizeof(int));
     lock_ids_path = malloc(L * sizeof(int));
 
+    int node = proc_index + (1 << L) - 1; // Leaf node index in binary tree
+
     for (int l = 0; l < L; l++) {
-
-        current_role = (proc_index & (1 << (L - l - 1))) >> (L - l - 1);
-        roles_path[l]= current_role;
-
-        current_lock_index = (proc_index >> (L - l)) + ((1 << l) - 1);
-        current_lock_id = lock_ids[current_lock_index];
-        lock_ids_path[l] = current_lock_id;
+        int parent = (node - 1) / 2;
+        roles_path[l] = (node % 2 == 0) ? 1 : 0;  // right child = role 1
+        lock_ids_path[l] = lock_ids[parent];
+        node = parent; // Move to parent node
     }
 }
 
 void print_path() {
-    printf("Path: ");
+    printf("Path: \n");
     for (int l = 0; l < L; l++) {
         printf("level: %d, lock id %d , role: %d\n", l, lock_ids_path[l], roles_path[l]);
     }
