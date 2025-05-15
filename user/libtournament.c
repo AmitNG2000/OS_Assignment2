@@ -1,39 +1,36 @@
-#include "user/user.h"
 #include "kernel/types.h"
+#include "kernel/stat.h"
+#include "user/user.h"
 
 #define MAX_PROCESSES 16
-#define PARENT_SYMBOLE (MAX_PROCESSES + 1)
+#define TOURNAMENT_PARENT -2
 
 static int *lock_ids; // Array of lock ids
 
-static int *roles_path; // Prosesse's path at the tree
-static int *lock_ids_path; // Prosesse's path at the tree
+static int *roles_path; // Prosesse's path at the tree. Every childe will have it own copy.
+static int *lock_ids_path; // Prosesse's path at the tree. Every childe will have it own copy.
 
 static int L = -1; // Number of levels in the tree
 
 
-/////////////////////////// Helper Functions ///////////////////////////
+///////////////////// Helper Functions Declaration /////////////////////
 
-int is_power_of_2(int n) {
-    return (n & (n - 1)) == 0;
-}
+int tournament_is_valid_number_of_processes(int n);
 
-int log2(int n) {
-    int log = 0;
-    while ((1 << log) < n) {
-        log++;
-    }
-    return log;
-}
+int log2(int n);
+
+void assign_path(int proc_index);
 
 /////////////////////////////////////////////////////////////////////////
 
-
+// Create a tournament tree (locs and proccess) with the given number of processes.
+// Returns the child process its ID, -2 to the parent, and -1 on error.
 int tournament_create(int processes) {
 
-    if (!is_power_of_2(processes) || processes > MAX_PROCESSES || processes <= 0 ) {
+    if (!tournament_is_valid_number_of_processes(processes)) {
         printf("[peterson_lock_test] Error: Number of processes must be a power of 2, positive and less than or equal to %d\n", MAX_PROCESSES);
         return -1;
+    
     }
     
     // Initialize data arrays
@@ -77,13 +74,72 @@ int tournament_create(int processes) {
     }
 
     // Only parent process gets here
-    for (int i = 0; i < processes; i++) {
-        wait(0); // Wait for all child processes to finish
-    }
-    return PARENT_SYMBOLE;
+    return TOURNAMENT_PARENT;
 }
 
 
+// Acquire the locks along the calling process's path, from the bottom to the root lock.
+int tournament_acquire(void) {
+    for (int l = 0; l < L; l++) {
+        if (peterson_acquire(lock_ids_path[l], roles_path[l]) < 0) {
+            printf("[tournament_acquire] Failed at level %d\n", l);
+            return -1;
+        }
+    }
+    return 0;
+}
+
+// Release the locks along the calling process's path, from the root to the bottom lock.
+int tournament_release(void) {
+    for (int l = L - 1; l >= 0; l--) {
+        if (peterson_release(lock_ids_path[l], roles_path[l]) < 0) {
+            printf("[tournament_release] Failed at level %d\n", l);
+            return -1;
+        }
+    }
+    return 0;
+}
+
+int tournament_destroy(void) {
+    if (lock_ids == 0 || L == -1) {
+        return -1; // Nothing to destroy or tournament not initialized
+    }
+
+    int num_locks = (1 << L) - 1; // same as: total processes - 1
+    for (int i = 0; i < num_locks; i++) {
+        peterson_destroy(lock_ids[i]);
+    }
+
+    free(lock_ids);
+    lock_ids = 0;
+    L = -1;
+
+    return 0;
+}
+
+
+/////////////////////////// Helper Functions ///////////////////////////
+
+int tournament_is_valid_number_of_processes(int n) {
+    int is_power_of_2 = (n & (n - 1)) == 0;
+    return (n > 0 && n <= MAX_PROCESSES && is_power_of_2);
+}
+
+int log2(int n) {
+    int log = 0;
+    while ((1 << log) < n) {
+        log++;
+    }
+    return log;
+}
+
+
+/*
+ * Executed only by the child process.
+ * Assigns lock IDs and roles to climb the tournament tree.
+ * Path consists of two arrays (size L): lock IDs and roles.
+ * At each level l, acquires lock_ids_path[l] with role roles_path[l].
+ */
 void assign_path(int proc_index) {
     int current_role = -1;
     int current_lock_index = -1;
@@ -96,44 +152,11 @@ void assign_path(int proc_index) {
         current_role = (proc_index & (1 << (L - l - 1))) >> (L - l - 1);
         roles_path[l]= current_role;
 
-
-        current_lock_index =  proc_index >> (L - l);
+        current_lock_index = (proc_index >> (L - l)) + ((1 << l) - 1);
         current_lock_id = lock_ids[current_lock_index];
         lock_ids_path[l] = current_lock_id;
+
     }
 }
 
-///////////////////////// co pilot from here //////////////////////
-
-// Function to acquire the tournament lock
-int tournament_acquire(void) {
-    int pid = getpid();
-    int index = tree_size - num_processes + pid;
-
-    while (index > 0) {
-        int parent = (index - 1) / 2;
-
-        while (xchg(&lock_tree[parent], 1) != 0) {
-            // Spin until the lock is acquired
-        }
-
-        index = parent;
-    }
-
-    return 0; // Lock acquired
-}
-
-// Function to release the tournament lock
-int tournament_release(void) {
-    int pid = getpid();
-    int index = tree_size - num_processes + pid;
-
-    while (index > 0) {
-        int parent = (index - 1) / 2;
-
-        lock_tree[parent] = 0; // Release the lock
-        index = parent;
-    }
-
-    return 0; // Lock released
-}
+/////////////////////////////////////////////////////////////////////////

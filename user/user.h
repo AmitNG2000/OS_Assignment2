@@ -43,6 +43,8 @@ void free(void*);
 int atoi(const char*);
 int memcmp(const void *, const void *, uint);
 void *memcpy(void *, const void *, uint);
-int tournament_create(int processes); // tournament tree (ADDED)
+int tournament_create(int); // tournament tree (ADDED)
 int tournament_acquire(void); // tournament tree (ADDED)
 int tournament_release(void); // tournament tree (ADDED)
+int tournament_destroy(void); // tournament tree (ADDED)
+
