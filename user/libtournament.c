@@ -54,21 +54,21 @@ int tournament_create(int processes) {
     // Init amount of levels in the tree
     L = log2(processes);
 
-    // Fork processes
+    // Fork processes (only after all locks are created)
     int pid;
     for (int index = 0; index < processes; index++) {
         pid = fork();
-        //error
-        if (pid < 0)
-            return -1; // Fork failed, do not clean up
         // Parent
         if (pid > 0)
             continue;
         //child
         if (pid == 0) {
             assign_path(index);
-            return index;
-        }  
+            return index; // index is the turnament ID for the child process
+        } 
+        //error
+        if (pid < 0)
+            return -1; // Fork failed, do not clean up 
     }
 
     // Only parent process gets here
@@ -151,10 +151,10 @@ void assign_path(int proc_index) {
     }
 }
 
-void print_path() {
+void tournament_print_path() {
     printf("Path: \n");
     for (int l = 0; l < L; l++) {
-        printf("level: %d, lock id %d , role: %d\n", l, lock_ids_path[l], roles_path[l]);
+        printf("      level: %d, lock id %d , role: %d\n", l, lock_ids_path[l], roles_path[l]);
     }
 }
 

@@ -47,6 +47,6 @@ int tournament_create(int); // tournament tree (ADDED)
 int tournament_acquire(void); // tournament tree (ADDED)
 int tournament_release(void); // tournament tree (ADDED)
 int tournament_destroy(void); // tournament tree (ADDED)
-void print_path(void); // tournament tree (ADDED)
+void tournament_print_path(void); // tournament tree (ADDED)
 
 

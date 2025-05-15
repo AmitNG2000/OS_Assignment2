@@ -16,10 +16,10 @@ int main(int argc, char **argv) {
 
     // Child
     if (tournament_id >= 0) {
-        tournament_acquire();
+        if (tournament_acquire()<0) exit(1);
         printf("Child process with pid: %d and tournament_id: %d, is in critical section\n", getpid(), tournament_id);
-        print_path();
-        tournament_release();
+        tournament_print_path();
+        if (tournament_release() < 0) exit(1);
         // It is unnecessary to clean up children’s data, as they require it during execution and the OS delete it upon the process' termination.
         exit(0); 
     }
@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
         for (int i = 0; i < num_processes; i++) {
             wait(0); 
         }
-        tournament_destroy();
+        if (tournament_destroy() < 0) exit(1);
         exit(0);
     }
     // Error
